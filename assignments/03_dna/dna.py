@@ -1,22 +1,59 @@
+#!/usr/bin/env python3
+"""
+Author : Add your Name <Add your email>
+Date   : 2025-02-14
+Purpose: count basepairs
+"""
+
 import argparse
 
-def count_bases(dna_sequence):
-    """Count the occurrences of each base (A, C, G, T) in the given DNA sequence."""
-    counts = {"A": 0, "C": 0, "G": 0, "T": 0}
-    for base in dna_sequence:
-        if base in counts:
-            counts[base] += 1
-    return counts["A"], counts["C"], counts["G"], counts["T"]
 
-def main():
+# --------------------------------------------------
+def get_args():
+    """Get command-line arguments"""
+
     parser = argparse.ArgumentParser(
-        description="Tetranucleotide frequency"
-    )
-    parser.add_argument("DNA", help="Input DNA sequence")
-    args = parser.parse_args()
-    
-    a, c, g, t = count_bases(args.DNA)
-    print(a, c, g, t)
+        description='count basepairs',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-if __name__ == "__main__":
+    parser.add_argument('positional',
+                        metavar='str',
+                        help='A positional argument')
+
+    parser.add_argument('-a',
+                        '--arg',
+                        help='A named string argument',
+                        metavar='str',
+                        type=str,
+                        default='')
+
+    parser.add_argument('-i',
+                        '--int',
+                        help='A named integer argument',
+                        metavar='int',
+                        type=int,
+                        default=0)
+
+    parser.add_argument('-f',
+                        '--file',
+                        help='A readable file',
+                        metavar='FILE',
+                        type=argparse.FileType('rt'),
+                        default=None)
+
+    parser.add_argument('-o',
+                        '--on',
+                        help='A boolean flag',
+                        action='store_true')
+
+    return parser.parse_args()
+
+
+# --------------------------------------------------
+def main():
+
+
+
+# --------------------------------------------------
+if __name__ == '__main__':
     main()
