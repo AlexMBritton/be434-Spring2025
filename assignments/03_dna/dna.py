@@ -8,6 +8,7 @@ Purpose: Tetranucleotide frequency counter
 import argparse
 import sys
 
+
 # --------------------------------------------------
 def get_args():
     """Get command-line arguments"""
@@ -22,13 +23,16 @@ def get_args():
 
     return parser.parse_args()
 
+
 # --------------------------------------------------
 def read_dna(source):
     """Read DNA sequence from file or direct input"""
 
     try:
-        if source and source.endswith(('.txt', '.fa', '.fasta')):  # Basic file check
-            with open(source, 'rt') as file:
+        if source and source.endswith(
+                ('.txt', '.fa', '.fasta')):  # Wrapped onto two lines
+            with open(source, 'rt',
+                      encoding='utf-8') as file:  # Line length fixed
                 return file.read().strip()
     except FileNotFoundError:
         print(f'Error: File "{source}" not found.', file=sys.stderr)
@@ -36,10 +40,12 @@ def read_dna(source):
 
     return source  # If not a file, treat as direct sequence
 
+
 # --------------------------------------------------
 def count_bases(dna):
     """Count occurrences of A, C, G, and T in DNA sequence"""
     return dna.count('A'), dna.count('C'), dna.count('G'), dna.count('T')
+
 
 # --------------------------------------------------
 def main():
@@ -49,6 +55,7 @@ def main():
     dna_sequence = read_dna(args.DNA)
     a, c, g, t = count_bases(dna_sequence)
     print(a, c, g, t)
+
 
 # --------------------------------------------------
 if __name__ == '__main__':
