@@ -6,40 +6,26 @@ Purpose: divide two numbers
 """
 
 import argparse
+import sys
 
-
-# --------------------------------------------------
 def get_args():
-    """Get command-line arguments"""
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description='Divide two numbers')
+    parser.add_argument('num1', type=int, help='First integer')
+    parser.add_argument('num2', type=int, help='Second integer (cannot be zero)')
+    return parser.parse_args()
 
-    parser = argparse.ArgumentParser(
-        description='divide two numbers',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('numbers',
-                        metavar='INT',
-                        help='two integers to divide',
-                        nargs=2,
-                        type=int)
-
-    args = parser.parse_args()
-    if args.numbers[1] == 0:
-        parser.error(f'Cannot divide by zero, dum-dum!')
-    return args
-
-
-# --------------------------------------------------
 def main():
-    """Make a jazz noise here"""
-
+    """Main function."""
     args = get_args()
-    numbers = args.numbers
-    num1 = numbers[0]
-    quotient = num1 // numbers[1]
 
-    print(f'my answer is: {quotient}')
+    if args.num2 == 0:
+        print("usage: divide.py [-h] INT INT", file=sys.stderr)
+        print("divide.py: error: Cannot divide by zero, dum-dum!", file=sys.stderr)
+        sys.exit(1)
 
+    result = args.num1 // args.num2
+    print(f"{args.num1} / {args.num2} = {result}")
 
-# --------------------------------------------------
 if __name__ == '__main__':
     main()

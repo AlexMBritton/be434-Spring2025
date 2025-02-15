@@ -1,58 +1,54 @@
 #!/usr/bin/env python3
 """
-Author : Add your Name <Add your email>
+Author : Alex <your email>
 Date   : 2025-02-14
-Purpose: count basepairs
+Purpose: Tetranucleotide frequency counter
 """
 
 import argparse
-
+import sys
 
 # --------------------------------------------------
 def get_args():
     """Get command-line arguments"""
 
     parser = argparse.ArgumentParser(
-        description='count basepairs',
+        description='Tetranucleotide frequency',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('positional',
-                        metavar='str',
-                        help='A positional argument')
-
-    parser.add_argument('-a',
-                        '--arg',
-                        help='A named string argument',
-                        metavar='str',
-                        type=str,
-                        default='')
-
-    parser.add_argument('-i',
-                        '--int',
-                        help='A named integer argument',
-                        metavar='int',
-                        type=int,
-                        default=0)
-
-    parser.add_argument('-f',
-                        '--file',
-                        help='A readable file',
-                        metavar='FILE',
-                        type=argparse.FileType('rt'),
-                        default=None)
-
-    parser.add_argument('-o',
-                        '--on',
-                        help='A boolean flag',
-                        action='store_true')
+    parser.add_argument('DNA',
+                        metavar='DNA',
+                        help='Input DNA sequence or filename')
 
     return parser.parse_args()
 
+# --------------------------------------------------
+def read_dna(source):
+    """Read DNA sequence from file or direct input"""
+
+    try:
+        if source and source.endswith(('.txt', '.fa', '.fasta')):  # Basic file check
+            with open(source, 'rt') as file:
+                return file.read().strip()
+    except FileNotFoundError:
+        print(f'Error: File "{source}" not found.', file=sys.stderr)
+        sys.exit(1)
+
+    return source  # If not a file, treat as direct sequence
+
+# --------------------------------------------------
+def count_bases(dna):
+    """Count occurrences of A, C, G, and T in DNA sequence"""
+    return dna.count('A'), dna.count('C'), dna.count('G'), dna.count('T')
 
 # --------------------------------------------------
 def main():
+    """Main function"""
 
-
+    args = get_args()
+    dna_sequence = read_dna(args.DNA)
+    a, c, g, t = count_bases(dna_sequence)
+    print(a, c, g, t)
 
 # --------------------------------------------------
 if __name__ == '__main__':
