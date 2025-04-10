@@ -3,6 +3,23 @@ import argparse
 import sys
 import os
 
+def get_args():
+    """Parse command-line arguments and handle file input."""
+    parser = argparse.ArgumentParser(description="Print the reverse complement of DNA")
+    parser.add_argument("DNA", metavar="DNA", help="Input sequence or file")
+    args = parser.parse_args()
+
+    # If DNA is a file, read its content
+    if os.path.isfile(args.DNA):
+        try:
+            with open(args.DNA, "r") as file:
+                args.DNA = file.read().strip()  # Read and strip whitespace
+        except FileNotFoundError:
+            print(f"Error: File '{args.DNA}' not found", file=sys.stderr)
+            sys.exit(1)
+
+    return args.DNA  # Return the DNA sequence
+
 def reverse_complement(dna: str) -> str:
     """Returns the reverse complement of a given DNA sequence."""
     complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C',
@@ -10,22 +27,8 @@ def reverse_complement(dna: str) -> str:
     return "".join(complement[base] for base in reversed(dna))
 
 def main():
-    """Main function to handle command-line arguments and process DNA input."""
-    parser = argparse.ArgumentParser(description="Print the reverse complement of DNA")
-    parser.add_argument("DNA", help="Input sequence or file")
-    args = parser.parse_args()
-
-    # Check if the input is a file and read contents
-    file_path = args.DNA
-    if os.path.isfile(file_path):  # Ensures we are correctly checking the file
-        try:
-            with open(file_path, "r") as file:
-                dna = file.read().strip()
-        except FileNotFoundError:
-            print(f"Error: File '{file_path}' not found", file=sys.stderr)
-            sys.exit(1)
-    else:
-        dna = args.DNA  # Directly use the input if it's not a file
+    """Main function to process DNA input and print the reverse complement."""
+    dna = get_args()  # Get DNA sequence from args
 
     # Validate DNA sequence
     if not all(base in "ATCGatcg" for base in dna):
