@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 import argparse
 import csv
@@ -5,6 +6,7 @@ import sys
 import os
 
 def read_hits(file):
+    """Read BLAST hits from file"""
     if not os.path.isfile(file):
         print(f"No such file or directory: '{file}'")
         sys.exit(1)
@@ -12,6 +14,7 @@ def read_hits(file):
         return [line.strip().split('\t') for line in f if line.strip()]
 
 def read_metadata(file):
+    """Read metadata from CSV file"""
     if not os.path.isfile(file):
         print(f"No such file or directory: '{file}'")
         sys.exit(1)
@@ -25,7 +28,8 @@ def read_metadata(file):
             meta[row['query']] = row
     return meta
 
-def guess_delimiter(filename, user_delim):
+def guess_delimiter(filename, user_delim=None):
+    """Guess the delimiter based on file extension"""
     if user_delim:
         return user_delim
     if filename.endswith(('.tsv', '.tab', '.txt')):
@@ -33,12 +37,13 @@ def guess_delimiter(filename, user_delim):
     return ','
 
 def main():
+    """Main function"""
     parser = argparse.ArgumentParser(description='Merge BLAST hits with metadata')
-    parser.add_argument('-a', '--annotations', required=True, help='Metadata CSV file')
-    parser.add_argument('-b', '--blasthits', required=True, help='BLAST tabular hits file')
+    parser.add_argument('-a', '--annotations', required=True, help='Annotations file')
+    parser.add_argument('-b', '--blasthits', required=True, help='BLAST -outfmt 6')
     parser.add_argument('-o', '--outfile', type=str, default="out.csv", help='Output file (default: out.csv)')
-    parser.add_argument('-p', '--pctid', type=float, default=0, help='Minimum percent identity (default: 0)')
-    parser.add_argument('-d', '--delimiter', type=str, help='Output delimiter (default: guessed from filename)')
+    parser.add_argument('-d', '--delimiter', type=str, help='Output field delimiter')
+    parser.add_argument('-p', '--pctid', type=float, default=0.0, help='Minimum percent identity')
     args = parser.parse_args()
 
     hits = read_hits(args.blasthits)
@@ -66,7 +71,7 @@ def main():
         writer.writeheader()
         writer.writerows(results)
 
-    print(f'Exported {len(results)} to "{args.outfile}".', end='')
+    print(f'Exported {len(results)} to "{args.outfile}".')
 
 if __name__ == '__main__':
     main()
