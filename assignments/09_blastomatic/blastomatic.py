@@ -1,116 +1,72 @@
-
 #!/usr/bin/env python3
-"""Parse blast file"""
-
 import argparse
 import csv
+import sys
 import os
-from typing import NamedTuple, TextIO
 
+def read_hits(file):
+    if not os.path.isfile(file):
+        print(f"No such file or directory: '{file}'")
+        sys.exit(1)
+    with open(file) as f:
+        return [line.strip().split('\t') for line in f if line.strip()]
 
-class Args(NamedTuple):
-    """Command-line arguments"""
-    blasthits: TextIO
-    annotations: TextIO
-    outfile: str
-    delimiter: str
-    pctid: float
+def read_metadata(file):
+    if not os.path.isfile(file):
+        print(f"No such file or directory: '{file}'")
+        sys.exit(1)
+    meta = {}
+    with open(file, newline='') as f:
+        reader = csv.DictReader(f)
+        if 'query' not in reader.fieldnames:
+            print(f"No such file or directory: '{file}'")
+            sys.exit(1)
+        for row in reader:
+            meta[row['query']] = row
+    return meta
 
+def guess_delimiter(filename, user_delim):
+    if user_delim:
+        return user_delim
+    if filename.endswith(('.tsv', '.tab', '.txt')):
+        return '\t'
+    return ','
 
-def get_args() -> Args:
-    """Get command-line arguments"""
-    parser = argparse.ArgumentParser(
-        description='Annotate BLAST output',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('-b',
-                       '--blasthits',
-                       help='BLAST -outfmt 6',
-                       metavar='FILE',
-                       type=argparse.FileType('rt'),
-                       required=True)
-
-    parser.add_argument('-a',
-                       '--annotations',
-                       help='Annotations file',
-                       metavar='FILE',
-                       type=argparse.FileType('rt'),
-                       required=True)
-
-    parser.add_argument('-o',
-                       '--outfile',
-                       help='Output file',
-                       metavar='FILE',
-                       type=str,
-                       default='out.csv')
-
-    parser.add_argument('-d',
-                       '--delimiter',
-                       help='Output field delimiter',
-                       metavar='DELIM',
-                       type=str,
-                       default='')
-
-    parser.add_argument('-p',
-                       '--pctid',
-                       help='Minimum percent identity',
-                       metavar='PCTID',
-                       type=float,
-                       default=0.0)
-
+def main():
+    parser = argparse.ArgumentParser(description='Merge BLAST hits with metadata')
+    parser.add_argument('-a', '--annotations', required=True, help='Metadata CSV file')
+    parser.add_argument('-b', '--blasthits', required=True, help='BLAST tabular hits file')
+    parser.add_argument('-o', '--outfile', type=str, default="out.csv", help='Output file (default: out.csv)')
+    parser.add_argument('-p', '--pctid', type=float, default=0, help='Minimum percent identity (default: 0)')
+    parser.add_argument('-d', '--delimiter', type=str, help='Output delimiter (default: guessed from filename)')
     args = parser.parse_args()
 
-    return Args(args.blasthits, args.annotations, args.outfile,
-               args.delimiter, args.pctid)
+    hits = read_hits(args.blasthits)
+    metadata = read_metadata(args.annotations)
 
-
-def guess_delimiter(filename: str) -> str:
-    """Guess the delimiter based on the file extension"""
-    ext = os.path.splitext(filename)[1].lower()
-    return '\t' if ext in ['.tab', '.txt', '.tsv'] else ','
-
-
-def main() -> None:
-    """Make a jazz noise here"""
-    args = get_args()
-
-    # Load the annotations into a lookup dict
-    annotations = {}
-    reader = csv.DictReader(args.annotations)
-    for row in reader:
-        annotations[row['qseqid']] = {
-            'depth': row['depth'],
-            'lat_lon': row['lat_lon']
+    results = []
+    for fields in hits:
+        query_id = fields[0]
+        pident = float(fields[2])
+        if pident < args.pctid:
+            continue
+        if query_id not in metadata:
+            continue
+        row = {
+            'qseqid': query_id,
+            'pident': fields[2],
+            'depth': metadata[query_id]['depth'],
+            'lat_lon': metadata[query_id]['lat_lon']
         }
+        results.append(row)
 
-    # Determine output delimiter
-    delimiter = args.delimiter or guess_delimiter(args.outfile)
-
-    # Process BLAST hits and write output
-    hits = []
-    for line in args.blasthits:
-        fields = line.rstrip().split('\t')
-        qseqid = fields[0]
-        pctid = float(fields[2])
-        
-        if pctid >= args.pctid and qseqid in annotations:
-            hits.append({
-                'qseqid': qseqid,
-                'pident': fields[2],
-                'depth': annotations[qseqid]['depth'],
-                'lat_lon': annotations[qseqid]['lat_lon']
-            })
-
-    # Write output
-    with open(args.outfile, 'wt') as out:
-        writer = csv.DictWriter(out,
-                              fieldnames=['qseqid', 'pident', 'depth', 'lat_lon'],
-                              delimiter=delimiter)
+    delimiter = guess_delimiter(args.outfile, args.delimiter)
+    with open(args.outfile, 'w', newline='') as out_f:
+        writer = csv.DictWriter(out_f, fieldnames=['qseqid', 'pident', 'depth', 'lat_lon'], delimiter=delimiter)
         writer.writeheader()
-        writer.writerows(hits)
+        writer.writerows(results)
 
-    print(f'Exported {len(hits)} to "{args.outfile}".')
-
+    print(f'Exported {len(results)} to "{args.outfile}".', end='')
 
 if __name__ == '__main__':
     main()
